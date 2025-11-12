@@ -10,6 +10,7 @@ export default defineConfig({
     target: ['es2022'],
     outDir: 'dist',
     treeshake: true,
-    external: ['axios']
+    external: ['axios'],
+    tsconfig: 'tsconfig.build.json'
 });
 
