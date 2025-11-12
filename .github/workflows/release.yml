@@ -25,7 +25,7 @@ jobs:
       - name: Check for pending changesets
         id: cs
         run: |
-          COUNT=$(find .changeset -maxdepth 1 -type f -name '*.md' 2>/dev/null | wc -l | tr -d '[:space:]' || true)
+          COUNT=$(find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l | tr -d '[:space:]' || true)
           if [ -z "$COUNT" ]; then COUNT=0; fi
           echo "count=${COUNT}" >> $GITHUB_OUTPUT
       - name: Apply versions from changesets
