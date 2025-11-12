@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- 6e69b66: Initial public release.
+
 ## 0.2.1
 
 ### Minor Changes
