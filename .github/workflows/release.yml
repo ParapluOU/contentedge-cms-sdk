@@ -45,5 +45,5 @@ jobs:
       - name: Publish to npm
         if: ${{ steps.cs.outputs.count != '0' }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # to be changed
         run: npm run release
