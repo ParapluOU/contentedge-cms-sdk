@@ -49,7 +49,17 @@ export class CmsClient {
                 if (this.auth) {
                     try {
                         const token = await this.auth.getAccessToken();
-                        if (token) config.headers.Authorization = `Bearer ${token}`;
+                        if (token) {
+                            // Prefer AxiosHeaders#set when available to satisfy typing
+                            // and avoid replacing the headers object.
+                            const h: unknown = config.headers as unknown;
+                            // @ts-expect-error runtime duck-typing
+                            if (h && typeof (h as any).set === 'function') {
+                                (h as any).set('Authorization', `Bearer ${token}`);
+                            } else {
+                                (config.headers as Record<string, unknown>).Authorization = `Bearer ${token}`;
+                            }
+                        }
                     } catch (e) {
                         this.logger?.error?.('Auth token fetch failed', e);
                     }
@@ -69,7 +79,17 @@ export class CmsClient {
                     try {
                         const token = await this.auth.getAccessToken({ forceRefresh: true });
                         if (token) {
-                            original.headers = { ...(original.headers || {}), Authorization: `Bearer ${token}` };
+                            const headers: unknown = original.headers as unknown;
+                            // Avoid replacing AxiosHeaders instance; set appropriately
+                            // @ts-expect-error runtime duck-typing
+                            if (headers && typeof (headers as any).set === 'function') {
+                                (headers as any).set('Authorization', `Bearer ${token}`);
+                            } else {
+                                original.headers = {
+                                    ...(original.headers as Record<string, unknown> | undefined),
+                                    Authorization: `Bearer ${token}`
+                                } as any;
+                            }
                             return this.http(original);
                         }
                     } catch (e) {
