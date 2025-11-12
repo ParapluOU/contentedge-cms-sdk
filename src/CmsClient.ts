@@ -62,7 +62,8 @@ export class CmsClient {
         this.http.interceptors.response.use(
             (response: AxiosResponse) => response,
             async (error: AxiosError) => {
-                const original: any = error.config || {};
+                type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+                const original = ((error.config ?? {}) as RetriableRequestConfig);
                 if (error.response?.status === 401 && this.auth && !original._retry) {
                     original._retry = true;
                     try {
@@ -129,7 +130,7 @@ export class CmsClient {
         const sortBy = params.sortBy ?? 'id';
         const direction = params.direction ?? 'DESC';
         const mapItem = opts?.mapItem ?? ((i) => i as unknown as T);
-        const dedupeBy = opts?.dedupeBy ?? ((i: any) => i.id);
+        const dedupeBy = opts?.dedupeBy ?? ((i: T) => (i as { id: string | number }).id);
         const hardStopMaxPages = opts?.hardStopMaxPages ?? 20;
 
         let page = 0;
