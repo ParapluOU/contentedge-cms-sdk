@@ -29,8 +29,11 @@ jobs:
           if [ -z "$COUNT" ]; then COUNT=0; fi
           echo "count=${COUNT}" >> $GITHUB_OUTPUT
       - name: Apply versions from changesets
-        if: ${{ steps.cs.outputs.count != '0' }}
         run: |
+          if [ "${{ steps.cs.outputs.count }}" = "0" ]; then
+            echo "No changesets to version. Skipping."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           npm run version:apply
