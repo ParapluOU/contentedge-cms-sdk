@@ -1,5 +1,5 @@
 {
-  "name": "@contentedge-cms/sdk",
+  "name": "@codesocietyou/contentedge-cms-sdk",
   "private": false,
   "version": "0.1.0",
   "description": "A lightweight, framework-agnostic TypeScript client for the ContentEdge headless CMS.",
