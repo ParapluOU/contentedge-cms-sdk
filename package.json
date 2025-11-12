@@ -1,0 +1,78 @@
+{
+  "name": "@contentedge-cms/sdk",
+  "private": false,
+  "version": "0.1.0",
+  "description": "A lightweight, framework-agnostic TypeScript client for the ContentEdge headless CMS.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "vite",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "build": "tsup",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "changeset": "changeset",
+    "version:apply": "changeset version",
+    "release": "changeset publish"
+  },
+  "keywords": [
+    "content",
+    "cms",
+    "sdk",
+    "typescript",
+    "keycloak"
+  ],
+  "author": "ContentEdge",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ParapluOU/contentedge-cms-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ParapluOU/contentedge-cms-sdk/issues"
+  },
+  "homepage": "https://github.com/ParapluOU/contentedge-cms-sdk#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "axios": "^1.7.7"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.9",
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/coverage-v8": "^4.0.8",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsup": "^8.3.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.8"
+  }
+}
