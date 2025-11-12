@@ -35,6 +35,8 @@ jobs:
           npm run version:apply
           git add -A
           git commit -m "Version Packages [skip ci]"
+          git fetch origin "${GITHUB_REF_NAME}"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin HEAD:${GITHUB_REF_NAME}
       - name: Publish to npm
         env:
