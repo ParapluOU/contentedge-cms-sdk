@@ -22,12 +22,22 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
+      - name: Clean npm config warnings
+        run: npm config delete always-auth || true
       - name: Check for pending changesets
         id: cs
         run: |
           COUNT=$(find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l | tr -d '[:space:]' || true)
           if [ -z "$COUNT" ]; then COUNT=0; fi
           echo "count=${COUNT}" >> $GITHUB_OUTPUT
+      - name: Check if package exists on npm
+        id: pkg
+        run: |
+          if npm view @codesocietyou/contentedge-cms-sdk version >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
       - name: Apply versions from changesets
         run: |
           if [ "${{ steps.cs.outputs.count }}" = "0" ]; then
@@ -43,7 +53,7 @@ jobs:
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin HEAD:${GITHUB_REF_NAME}
       - name: Publish to npm
-        if: ${{ steps.cs.outputs.count != '0' }}
+        if: ${{ steps.cs.outputs.count != '0' || steps.pkg.outputs.exists == 'false' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # to be changed
         run: npm run release
