@@ -14,16 +14,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24.11.0'
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-      - name: Create Release Pull Request or Publish
-        uses: changesets/action@v1
-        with:
-          publish: npm run release
+      - name: Check for pending changesets
+        id: cs
+        run: |
+          COUNT=$(ls .changeset 2>/dev/null | grep -E '\.md$' | wc -l || true)
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+      - name: Apply versions from changesets
+        if: steps.cs.outputs.count != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm run version:apply
+          git add -A
+          git commit -m "Version Packages [skip ci]"
+          git push origin HEAD:${GITHUB_REF_NAME}
+      - name: Publish to npm
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm run release
