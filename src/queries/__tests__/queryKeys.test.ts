@@ -59,8 +59,6 @@ describe('queryKeys', () => {
     it('maintains type safety with as const assertions', () => {
         const key = contentKeys.all;
         // TypeScript should infer this as readonly ['content']
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const _typeCheck: readonly ['content'] = key;
         expect(key).toEqual(['content']);
     });
 });
