@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '24.11.0'
+          node-version: '24.13.1'
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
@@ -55,5 +55,11 @@ jobs:
       - name: Publish to npm
         if: ${{ steps.cs.outputs.count != '0' || steps.pkg.outputs.exists == 'false' }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # to be changed
+          # NPM_TOKEN must be a granular access token with:
+          # - Write permission for @codesocietyou/contentedge-cms-sdk
+          # - "Bypass 2FA" enabled for CI/CD
+          # - Maximum 90-day expiration
+          # Create at: https://www.npmjs.com/settings/~/tokens
+          # Alternative: Use OIDC trusted publishing (see README)
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm run release
