@@ -1,233 +1,427 @@
-## ContentEdge SDK (TypeScript)
+# ContentEdge SDK (TypeScript)
 
-A lightweight, framework-agnostic TypeScript client for the ContentEdge headless CMS. It provides a small, typed façade over the HTTP API with pluggable auth, robust pagination helpers, asset/file utilities, and structured errors—without embedding project-specific domain models (e.g., News/Blog/Reports).
+A lightweight, framework-agnostic TypeScript client for the ContentEdge headless CMS. It provides a clean, typed interface over the HTTP API with public API key authentication, robust pagination helpers, asset/file utilities, and structured errors—without embedding project-specific domain models.
 
 This SDK models the wire contract via a generic `ContentDto<C>` where `C` represents your custom fields. It does not import or depend on the CMS server code.
 
-### Features
+## Features
 
-- Generic content model: `ContentDto<C>` with consumer-defined custom fields
-- Pluggable auth strategy: `AuthProvider` (includes Keycloak client-credentials)
-- Resilient pagination: `listAllContent` aggregates pages with dedupe and safe stop
-- Asset/file helpers: `buildAssetUrl` and safe `downloadFile`
-- Structured error model: `CmsError` with status and response data
-- Framework-agnostic; optional React Query adapter pattern
+- **Generic content model**: `ContentDto<C>` with consumer-defined custom fields
+- **Public API key authentication**: Simple header-based authentication
+- **Service layer pattern**: Centralized API client with interceptors
+- **React Query integration**: Optional query factory and hooks
+- **Resilient pagination**: `fetchAllContent` aggregates pages with dedupe and safe stop
+- **Asset/file helpers**: `buildAssetUrl` and safe `downloadFile`
+- **Normalization utilities**: Transform API responses to normalized structures
+- **Structured error model**: `CmsError` with status and response data
+- **Framework-agnostic**: Core services work anywhere; React Query layer is optional
+- **TypeScript-first**: Full type safety with generics
 
-### Installation
+## Installation
 
 ```bash
 npm install @codesocietyou/contentedge-cms-sdk
 # or
 yarn add @codesocietyou/contentedge-cms-sdk
+# or
+pnpm add @codesocietyou/contentedge-cms-sdk
 ```
 
-### Quick Start
+For React Query integration, also install:
 
-```ts
-import {
-  CmsClient,
-  KeycloakClientCredentialsAuth,
-  type ContentDto
-} from '@codesocietyou/contentedge-cms-sdk';
+```bash
+npm install @tanstack/react-query
+```
 
-// Auth (Keycloak client-credentials) - server-side only
-const auth = new KeycloakClientCredentialsAuth({
-  tokenUrl: 'https://auth.example.com/realms/contentedge/protocol/openid-connect/token',
-  clientId: 'contentedge-client',
-  clientSecret: 'xxxxxx'
+## Quick Start
+
+### 1. Initialize the SDK
+
+```typescript
+import { createApiClient } from '@codesocietyou/contentedge-cms-sdk';
+
+// Initialize once at app startup
+createApiClient({
+  baseUrl: 'https://api.contentedge.com',
+  fileBaseUrl: 'https://cdn.contentedge.com', // optional
+  apiKey: 'your-api-key',                      // optional
+  tenant: 'your-tenant',                       // optional
+  timeoutMs: 30_000,                           // optional (default: 30s)
 });
+```
 
-// Client
-const contentedge = new CmsClient({
-  baseUrl: 'https://cms.example.com/api',
-  fileBaseUrl: 'https://cms.example.com', // optional (asset host)
-  tenant: 'your-tenant',                  // optional; sent as X-Tenant
-  auth
-});
+### 2. Fetch Content (Basic)
 
-// List content by type with filters/pagination
-const list = await contentedge.listContent({
-  type: 'REPORT',
+```typescript
+import { fetchContentByType } from '@codesocietyou/contentedge-cms-sdk';
+
+// Fetch paginated content
+const response = await fetchContentByType({
+  type: 'NEWS',
   page: 0,
   size: 10,
   sortBy: 'id',
   direction: 'DESC',
-  filters: { publicationType: 'GAMEHEARTS' } // arbitrary query params
+  filters: { publicationType: 'GAMEHEARTS' }, // arbitrary filters
 });
 
-// Get detail by id
-const detail = await contentedge.getContentById(123);
-
-// Download a file (Blob in browsers)
-const pdf = await contentedge.downloadFile('https://cms.example.com/files/doc.pdf');
+const items = response.data.content;
 ```
 
-### API
+### 3. Fetch Content (React Query)
 
-- Client
-  - `new CmsClient(config)`
-    - `baseUrl`: CMS API base URL (e.g., `https://cms.example.com/api`)
-    - `fileBaseUrl?`: Preferred file/asset base (often origin w/o `/api`)
-    - `tenant?`: Adds `X-Tenant` header
-    - `timeoutMs?`: Default 30000
-    - `logger?`: `{ debug?, warn?, error? }`
-    - `auth?`: `AuthProvider`
-  - `listContent<C>(params?: ContentListParams): Promise<ContentResponse<C>>`
-  - `getContentById<C>(id: number): Promise<ApiResponse<ContentDto<C>>>`
-  - `listAllContent<C, T = ContentDto<C>>(params: Omit<ContentListParams, 'page'>, opts?: { mapItem?, dedupeBy?, hardStopMaxPages? }): Promise<T[]>`
-  - `buildAssetUrl(path?: string | null): string`
-  - `downloadFile(path: string): Promise<Blob>`
+```typescript
+import { useQuery } from '@tanstack/react-query';
+import { contentQueries } from '@codesocietyou/contentedge-cms-sdk';
 
-- Auth
-  - `AuthProvider`: `getAccessToken(opts?: { forceRefresh?: boolean }): Promise<string>`
-  - `KeycloakClientCredentialsAuth({ tokenUrl, clientId, clientSecret })`
+function NewsList() {
+  const { data, isLoading, error } = useQuery(
+    contentQueries.list({ type: 'NEWS', page: 0, size: 10 })
+  );
 
-- Types
-  - `ContentDto<C extends Record<string, JsonValue>>`
-  - `ApiResponse<T>`
-  - `PaginatedData<T>`
-  - `ContentResponse<C>`
-  - `ContentListParams`:
-    - `type?`, `page?`, `size?`, `sortBy?`, `direction?`
-    - `filters?`: arbitrary query params
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
-- Errors
-  - `CmsError extends Error` with `.status?: number` and `.data?: unknown`
+  return (
+    <ul>
+      {data.data.content.map(item => (
+        <li key={item.id}>{item.title}</li>
+      ))}
+    </ul>
+  );
+}
+```
 
-### Mapping to your app models
+### 4. Normalization
 
-Keep domain mapping out of the SDK. Define custom fields and a mapper in your app:
+```typescript
+import { 
+  normalizeContentItem,
+  fetchContentByType 
+} from '@codesocietyou/contentedge-cms-sdk';
 
-```ts
-// Your custom fields
-type MyCustomFields = {
-  title?: string;
-  text?: string;
-  insideImage?: string;
-  outsideImage?: string;
-  references?: string | null;
-  pdfPath?: string | null;
-  citation?: string | null;
-  abstract?: string | null;
-  team?: string | null;
-  publicationType?: 'GAMEHEARTS' | 'EXTERNAL' | null;
-  fake?: boolean | null;
-};
+// Fetch and normalize
+const response = await fetchContentByType({ type: 'NEWS' });
+const normalized = response.data.content.map(normalizeContentItem);
 
-// Your view model
-type NormalizedItem = {
+// normalized items have resolved asset URLs and standardized fields
+console.log(normalized[0].insideImage); // "https://cdn.contentedge.com/images/news.jpg"
+console.log(normalized[0].pdfPath);     // "https://cdn.contentedge.com/files/doc.pdf"
+```
+
+## API Reference
+
+### Configuration
+
+#### `createApiClient(config: SdkConfig): AxiosInstance`
+
+Initialize the SDK with your CMS configuration. Call this once at app startup.
+
+```typescript
+interface SdkConfig {
+  baseUrl: string;        // CMS API base URL (required)
+  fileBaseUrl?: string;   // Preferred file/asset base
+  apiKey?: string;        // API key for authentication
+  tenant?: string;        // Tenant identifier (sent as X-Tenant header)
+  timeoutMs?: number;     // Request timeout (default: 30000)
+  logger?: {
+    debug?: (...args: unknown[]) => void;
+    warn?: (...args: unknown[]) => void;
+    error?: (...args: unknown[]) => void;
+  };
+}
+```
+
+### Service Layer
+
+#### `fetchContentByType<C>(params: ContentListParams): Promise<ContentResponse<C>>`
+
+Fetch paginated content by type with filters and sorting.
+
+```typescript
+interface ContentListParams {
+  type?: string;                    // Content type (default: 'ALL')
+  page?: number;                    // Page number (0-indexed)
+  size?: number;                    // Items per page
+  sortBy?: string;                  // Sort field (default: 'id')
+  direction?: 'ASC' | 'DESC';       // Sort direction (default: 'DESC')
+  filters?: Record<string, any>;    // Arbitrary query filters
+}
+```
+
+#### `fetchContentById<C>(id: number): Promise<ApiResponse<ContentDto<C>>>`
+
+Fetch a single content item by ID.
+
+#### `fetchAllContent<C, T>(params, options): Promise<T[]>`
+
+Fetch all content items across multiple pages with automatic pagination.
+
+```typescript
+interface FetchAllOptions<C, T> {
+  mapItem?: (item: ContentDto<C>) => T;        // Transform each item
+  dedupeBy?: (item: T) => string | number;     // Dedupe key extractor
+  hardStopMaxPages?: number;                    // Safety limit (default: 20)
+}
+```
+
+#### `downloadFile(path: string): Promise<Blob>`
+
+Download a file from a given path (with proper authentication for CMS files).
+
+### React Query Integration
+
+#### `contentQueries`
+
+Query options factory for use with `useQuery`:
+
+```typescript
+// Paginated list
+contentQueries.list({ type: 'NEWS', page: 0, size: 10 })
+
+// Single item
+contentQueries.detail(123)
+
+// Fetch all (across pages)
+contentQueries.listAll({ type: 'NEWS', size: 100 }, { mapItem: normalizeContentItem })
+```
+
+#### Hooks
+
+```typescript
+// List hook
+const { data } = useContentList({ type: 'NEWS', page: 0, size: 10 });
+
+// Detail hook
+const { data } = useContentDetail(123);
+
+// Fetch all hook
+const { data } = useContentAll({ type: 'NEWS' });
+
+// Prefetch utilities
+const { prefetchList, prefetchDetail, invalidateLists } = useContentPrefetch();
+```
+
+#### Query Keys
+
+Hierarchical query key factory for manual cache manipulation:
+
+```typescript
+import { contentKeys } from '@codesocietyou/contentedge-cms-sdk';
+
+// Invalidate all lists
+queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
+
+// Invalidate specific detail
+queryClient.invalidateQueries({ queryKey: contentKeys.detail(123) });
+```
+
+### Normalization
+
+#### `normalizeContentItem<C>(item: ContentDto<C>): NormalizedContentItem`
+
+Transform a content item to a normalized structure with resolved asset URLs:
+
+```typescript
+interface NormalizedContentItem {
   id: number;
   title: string;
   text: string;
-  insideImage: string;
-  outsideImage: string;
-  references: string | null;
-  pdfPath: string | null;
   type: string;
+  insideImage: string;      // Resolved URL
+  outsideImage: string;     // Resolved URL
+  pdfPath: string | null;   // Resolved URL (type-aware)
+  references: string | null;
   citation: string | null;
-  fake: boolean | null;
   abstract: string | null;
   team: string | null;
-  publicationType: 'GAMEHEARTS' | 'EXTERNAL' | null;
-};
+  publicationType: string | null;
+  fake: boolean | null;
+}
+```
 
-const mapToNormalized = (item: ContentDto<MyCustomFields>): NormalizedItem => ({
-  id: item.id,
-  title: item.customFields.title || item.title,
-  text: item.customFields.text || item.text,
-  insideImage: contentedge.buildAssetUrl(item.customFields.insideImage || ''),
-  outsideImage: contentedge.buildAssetUrl(item.customFields.outsideImage || ''),
-  references: item.customFields.references ?? null,
-  pdfPath: contentedge.buildAssetUrl(item.customFields.pdfPath ?? null),
-  type: item.type,
-  citation: item.customFields.citation ?? null,
-  fake: item.customFields.fake ?? null,
-  abstract: item.customFields.abstract ?? null,
-  team: item.customFields.team ?? null,
-  publicationType: item.customFields.publicationType ?? null
-});
+#### `buildAssetUrlWithConfig(path?: string | null): string`
 
-// Fetch-all with mapping + dedupe
-const items = await contentedge.listAllContent<MyCustomFields, NormalizedItem>(
-  { type: 'REPORT', size: 100, sortBy: 'id', direction: 'DESC', filters: { publicationType: 'GAMEHEARTS' } },
-  { mapItem: mapToNormalized, dedupeBy: (i) => i.id }
+Build an asset URL using the SDK's configured base URLs.
+
+### Error Handling
+
+```typescript
+import { CmsError } from '@codesocietyou/contentedge-cms-sdk';
+
+try {
+  await fetchContentByType({ type: 'NEWS' });
+} catch (e) {
+  if (e instanceof CmsError) {
+    console.error('CMS error:', e.status, e.data);
+    // e.status: HTTP status code
+    // e.data: Response body (if any)
+  } else {
+    console.error('Unknown error:', e);
+  }
+}
+```
+
+## Advanced Usage
+
+### Custom Fields Type
+
+Define your own custom fields type for full type safety:
+
+```typescript
+interface MyCustomFields {
+  title: string;
+  text: string;
+  author?: string;
+  tags?: string[];
+  publishedAt?: string;
+}
+
+// Use with type parameter
+const response = await fetchContentByType<MyCustomFields>({ type: 'ARTICLE' });
+const items = response.data.content; // ContentDto<MyCustomFields>[]
+```
+
+### Custom Normalization
+
+```typescript
+interface MyNormalizedItem {
+  id: number;
+  title: string;
+  author: string;
+  tags: string[];
+}
+
+function myNormalize(item: ContentDto<MyCustomFields>): MyNormalizedItem {
+  return {
+    id: item.id,
+    title: item.customFields.title || item.title,
+    author: item.customFields.author || 'Unknown',
+    tags: item.customFields.tags || [],
+  };
+}
+
+// Use with fetchAllContent
+const items = await fetchAllContent<MyCustomFields, MyNormalizedItem>(
+  { type: 'ARTICLE', size: 100 },
+  { mapItem: myNormalize }
 );
 ```
 
-### React Query (optional pattern)
+### React Query Configuration
 
-```ts
-import { queryOptions } from '@tanstack/react-query';
-import type { ContentListParams, ContentDto } from '@codesocietyou/contentedge-cms-sdk';
+```typescript
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createApiClient } from '@codesocietyou/contentedge-cms-sdk';
 
-export const contentQueries = {
-  list: (params: ContentListParams) => queryOptions({
-    queryKey: ['content', 'list', params.type ?? 'ALL', params],
-    queryFn: () => contentedge.listContent(params),
-    staleTime: 5 * 60_000,
-    gcTime: 10 * 60_000
-  }),
-  detail: (id: number) => queryOptions({
-    queryKey: ['content', 'detail', id],
-    queryFn: () => contentedge.getContentById(id),
-    staleTime: 10 * 60_000,
-    gcTime: 30 * 60_000
-  }),
-  listAll: <C, T = ContentDto<C>>(params: Omit<ContentListParams, 'page'>, mapItem: (i: ContentDto<C>) => T) =>
-    queryOptions({
-      queryKey: ['content', 'all', params.type ?? 'ALL', { ...params, mode: 'all' }],
-      queryFn: () => contentedge.listAllContent(params, { mapItem }),
-      staleTime: 5 * 60_000,
-      gcTime: 10 * 60_000
-    })
-};
-```
+// Initialize SDK
+createApiClient({
+  baseUrl: process.env.VITE_API_URL!,
+  apiKey: process.env.VITE_API_KEY,
+  tenant: 'my-tenant',
+});
 
-### Error handling
+// Create query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-```ts
-try {
-  await contentedge.listContent({ type: 'NEWS' });
-} catch (e) {
-  if (e instanceof CmsError) {
-    console.error('ContentEdge error', e.status, e.data);
-  } else {
-    console.error('Unknown error', e);
-  }
+// Wrap app
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <YourApp />
+    </QueryClientProvider>
+  );
 }
 ```
 
-401s are retried once with a forced token refresh when an `AuthProvider` is provided.
+## Migration from v0.2.x
 
-### Security
+The v1.0.0 release includes breaking changes:
 
-- `KeycloakClientCredentialsAuth` is intended for server-side usage. Do not expose client secrets in browsers.
-- For browsers, you can implement a simple bearer token strategy:
+### Removed
 
-```ts
-class BearerTokenAuth implements AuthProvider {
-  constructor(private readonly getToken: () => Promise<string> | string) {}
-  async getAccessToken() {
-    return typeof this.getToken === 'function' ? await this.getToken() : this.getToken;
-  }
-}
+- `CmsClient` class → Use service functions + `createApiClient()`
+- `KeycloakClientCredentialsAuth` → Use API key authentication
+- `AuthProvider` interface → No longer needed
+
+### Migration Steps
+
+**Before (v0.2.x):**
+
+```typescript
+import { CmsClient, KeycloakClientCredentialsAuth } from '@codesocietyou/contentedge-cms-sdk';
+
+const auth = new KeycloakClientCredentialsAuth({
+  tokenUrl: 'https://auth.example.com/token',
+  clientId: 'client',
+  clientSecret: 'secret',
+});
+
+const client = new CmsClient({
+  baseUrl: 'https://api.example.com',
+  auth,
+});
+
+const list = await client.listContent({ type: 'NEWS' });
+const detail = await client.getContentById(123);
 ```
 
-- `downloadFile` avoids sending Authorization headers to non-CMS domains.
-- Prefer runtime configuration to inject secrets; limit scopes on your Keycloak client.
+**After (v1.0.0):**
 
-### Endpoint assumptions
+```typescript
+import { 
+  createApiClient, 
+  fetchContentByType, 
+  fetchContentById 
+} from '@codesocietyou/contentedge-cms-sdk';
+
+// Initialize once
+createApiClient({
+  baseUrl: 'https://api.example.com',
+  apiKey: 'your-api-key',
+});
+
+// Use service functions
+const list = await fetchContentByType({ type: 'NEWS' });
+const detail = await fetchContentById(123);
+```
+
+## Security
+
+- **API Keys**: Store in environment variables, never commit to source control
+- **Runtime Configuration**: Inject secrets at runtime in production
+- **CORS**: Ensure your CMS API allows requests from your domain
+- **Rate Limiting**: The SDK logs 429 errors; implement retry logic if needed
+
+## Endpoint Assumptions
 
 By default, the SDK uses:
-- `GET /content/type/:type`
-- `GET /content/:id`
 
-If your deployment differs, wrap or extend `CmsClient`.
+- `GET /content/type/:type` - List content by type
+- `GET /content/:id` - Get content by ID
 
-### Versioning
+If your deployment uses different endpoints, wrap or extend the service functions.
 
-Semantic Versioning (SemVer). Breaking changes bump MAJOR.
+## Contributing
 
-### License
+Contributions are welcome! Please follow the existing code style and add tests for new features.
+
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/). Breaking changes bump MAJOR.
+
+## License
 
 MIT
+
+## Support
+
+- Issues: https://github.com/ParapluOU/contentedge-cms-sdk/issues
+- Docs: https://github.com/ParapluOU/contentedge-cms-sdk#readme
