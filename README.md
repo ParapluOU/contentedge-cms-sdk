@@ -400,14 +400,33 @@ const detail = await fetchContentById(123);
 - **CORS**: Ensure your CMS API allows requests from your domain
 - **Rate Limiting**: The SDK logs 429 errors; implement retry logic if needed
 
-## Endpoint Assumptions
+## ContentEdge CMS Endpoints
 
-By default, the SDK uses:
+This SDK is designed specifically for the ContentEdge CMS API. The endpoint paths are fixed as part of the CMS API contract:
 
-- `GET /content/type/:type` - List content by type
-- `GET /content/:id` - Get content by ID
+- `GET /content/type/:type` - List content by type with pagination
+- `GET /content/:id` - Get single content item by ID
 
-If your deployment uses different endpoints, wrap or extend the service functions.
+### Environment Configuration
+
+The `baseUrl` configuration allows you to connect to different ContentEdge CMS deployments:
+
+**Development:**
+```typescript
+createApiClient({ baseUrl: 'http://localhost:8080/api' });
+```
+
+**Staging:**
+```typescript
+createApiClient({ baseUrl: 'https://staging-cms.contentedge.com/api' });
+```
+
+**Production:**
+```typescript
+createApiClient({ baseUrl: 'https://cms.contentedge.com/api' });
+```
+
+This deployment flexibility is intentional and does not mean the SDK supports different API contracts. All ContentEdge CMS instances use the same endpoint structure.
 
 ## Contributing
 
