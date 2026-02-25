@@ -4,6 +4,15 @@ A lightweight, framework-agnostic TypeScript client for the ContentEdge headless
 
 This SDK models the wire contract via a generic `ContentDto<C>` where `C` represents your custom fields. It does not import or depend on the CMS server code.
 
+> ### Looking for IT services?
+> <img src="https://fromulo.com/codesociety.png" align="left" width="80" alt="CodeSociety">
+>
+> **[CodeSociety](https://codesocietyhub.com/)** is our consulting & contracting arm — specializing in
+> **IT architecture**, **XML authoring systems**, **FontoXML integration**, and **TerminusDB consulting**.
+> We build structured content platforms and data solutions that power digital publishing.
+>
+> **[Let's talk! &#8594;](https://codesocietyhub.com/contact.html)**
+
 ## Features
 
 - **Generic content model**: `ContentDto<C>` with consumer-defined custom fields
