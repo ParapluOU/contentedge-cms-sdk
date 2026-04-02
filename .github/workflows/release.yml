@@ -52,6 +52,9 @@ jobs:
           git fetch origin "${GITHUB_REF_NAME}"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin HEAD:${GITHUB_REF_NAME}
+      - name: Build
+        if: ${{ steps.cs.outputs.count != '0' || steps.pkg.outputs.exists == 'false' }}
+        run: npm run build
       - name: Publish to npm
         if: ${{ steps.cs.outputs.count != '0' || steps.pkg.outputs.exists == 'false' }}
         env:
