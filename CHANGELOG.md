@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- 45cead6: Re-publish with compiled dist artifacts included.
+
 ## 1.0.0
 
 ### Major Changes
