@@ -15,6 +15,7 @@ export * from './types/config';
 // Utils
 export * from './utils/assetUrl';
 export * from './utils/normalization';
+export * from './utils/richText';
 
 // Errors
 export * from './errors/CmsError';
