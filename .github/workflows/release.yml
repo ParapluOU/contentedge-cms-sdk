@@ -30,13 +30,14 @@ jobs:
           COUNT=$(find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l | tr -d '[:space:]' || true)
           if [ -z "$COUNT" ]; then COUNT=0; fi
           echo "count=${COUNT}" >> $GITHUB_OUTPUT
-      - name: Check if package exists on npm
+      - name: Check if this version is already published on npm
         id: pkg
         run: |
-          if npm view @codesocietyou/contentedge-cms-sdk version >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          if npm view @codesocietyou/contentedge-cms-sdk@${LOCAL_VERSION} version >/dev/null 2>&1; then
+            echo "already_published=true" >> $GITHUB_OUTPUT
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "already_published=false" >> $GITHUB_OUTPUT
           fi
       - name: Apply versions from changesets
         run: |
@@ -53,10 +54,10 @@ jobs:
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin HEAD:${GITHUB_REF_NAME}
       - name: Build
-        if: ${{ steps.cs.outputs.count != '0' || steps.pkg.outputs.exists == 'false' }}
+        if: ${{ steps.cs.outputs.count != '0' || steps.pkg.outputs.already_published == 'false' }}
         run: npm run build
       - name: Publish to npm
-        if: ${{ steps.cs.outputs.count != '0' || steps.pkg.outputs.exists == 'false' }}
+        if: ${{ steps.cs.outputs.count != '0' || steps.pkg.outputs.already_published == 'false' }}
         env:
           # NPM_TOKEN must be a granular access token with:
           # - Write permission for @codesocietyou/contentedge-cms-sdk
