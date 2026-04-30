@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- Add `stripHtmlTags` and `isHtmlContent` utilities in `utils/richText`.
+  - `stripHtmlTags(html)`: regex-based HTML stripper, safe in Node/SSR/edge environments (no DOM dependency).
+  - `isHtmlContent(value)`: detects TipTap-generated HTML without false-positives on plain-text angle brackets.
+  - Both are exported from the package root.
+
 ## 1.0.1
 
 ### Patch Changes
