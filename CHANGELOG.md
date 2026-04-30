@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.2
+## 1.0.3
 
 ### Patch Changes
 
@@ -8,6 +8,9 @@
   - `stripHtmlTags(html)`: regex-based HTML stripper, safe in Node/SSR/edge environments (no DOM dependency).
   - `isHtmlContent(value)`: detects TipTap-generated HTML without false-positives on plain-text angle brackets.
   - Both are exported from the package root.
+- Upgrade all dev dependencies to latest (`vitest` 4.1.5, `typescript` 6, `vite` 8, `tsdown` 0.21.10, `typescript-eslint` 8.59.1, etc.).
+- Fix GitHub Actions Node.js 20 deprecation: pin `actions/checkout@v4.2.2` and `actions/setup-node@v4.4.0`.
+- Fix `tsdown.config.ts` for `tsdown` 0.21: migrate `external` → `deps.neverBundle`, add `dts: { build: true }` for project references.
 
 ## 1.0.1
 
