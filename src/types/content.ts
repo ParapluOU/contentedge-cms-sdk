@@ -45,20 +45,40 @@ export interface ContentListParams {
 }
 
 /**
- * Normalized content item with commonly used fields
+ * Normalized content item with commonly used fields.
  * This type is exported for convenience but normalization is handled
- * by the normalizeContentItem function in utils/normalization
+ * by the {@link normalizeContentItem} function in utils/normalization.
  */
 export interface NormalizedContentItem {
     id: number;
     title: string;
+    /**
+     * Main body text for the content item.
+     *
+     * This field may contain **TipTap-generated HTML** (e.g. `<p>`, `<ul>`, `<li>`,
+     * `<strong>`, `<em>`, `<a>`). Render it with a rich text renderer (TipTap
+     * read-only mode or `dangerouslySetInnerHTML`) rather than as a plain string.
+     * Use {@link stripHtmlTags} to obtain a plain-text preview.
+     */
     text: string;
     type: string;
     insideImage: string;
     outsideImage: string;
     pdfPath: string | null;
+    /**
+     * References / bibliography field.
+     *
+     * May contain **TipTap-generated HTML** (ordered lists, links, bold text).
+     * Render with a rich text renderer or strip with {@link stripHtmlTags}.
+     */
     references: string | null;
     citation: string | null;
+    /**
+     * Abstract or summary of the content item.
+     *
+     * May contain **TipTap-generated HTML** (paragraphs, bold, italic).
+     * Render with a rich text renderer or strip with {@link stripHtmlTags}.
+     */
     abstract: string | null;
     team: string | null;
     publicationType: string | null;
