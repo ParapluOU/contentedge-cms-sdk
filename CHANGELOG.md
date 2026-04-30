@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.4
+
+### Patch Changes
+
+- Fix: add `prepublishOnly: "npm run build"` so `dist/` is always built before `npm publish`.
+  - 1.0.3 was published without the `dist` folder (package had no compiled artifacts).
+  - 1.0.4 is the corrected re-publish of the same changes.
+
 ## 1.0.3
 
 ### Patch Changes
