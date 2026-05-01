@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.8
+
+### Patch Changes
+
+- Fix `dist/styles.css`: all list-style properties now carry `!important` so they survive any
+  CSS reset that is not wrapped in `@layer base` (unlayered resets such as older Tailwind v3
+  Preflight, normalize.css, or MUI CssBaseline would otherwise silently override
+  `.tiptap-bullet-list` and `.tiptap-ordered-list`, making bullets and numbers invisible).
+  The `display: list-item !important` rule on `li` elements is also added for the same reason.
+  Consumers using Tailwind v4 (whose Preflight is inside `@layer base`) were unaffected, but
+  the `!important` guards make the stylesheet robust for all CSS environments.
+
 ## 1.0.7
 
 ### Patch Changes
