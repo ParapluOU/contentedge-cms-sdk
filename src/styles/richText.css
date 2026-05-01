@@ -1,0 +1,32 @@
+/* TipTap rich-text display styles.
+   These classes are emitted by ContentEdge's TipTap editor extensions
+   (BulletList, OrderedList, Link). Import this file once in your app
+   entry point wherever stored HTML is rendered via dangerouslySetInnerHTML
+   or equivalent. Without these rules, CSS frameworks that reset list
+   styles (e.g. Tailwind Preflight) will strip bullets and indentation. */
+
+.tiptap-bullet-list {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.tiptap-ordered-list {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.tiptap-bullet-list li,
+.tiptap-ordered-list li {
+  display: list-item;
+  margin-bottom: 0.25em;
+}
+
+.tiptap-link {
+  text-decoration: underline;
+}
+
+.tiptap-link:hover {
+  opacity: 0.8;
+}
