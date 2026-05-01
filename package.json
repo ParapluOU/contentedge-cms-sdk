@@ -1,7 +1,7 @@
 {
   "name": "@codesocietyou/contentedge-cms-sdk",
   "private": false,
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A lightweight, framework-agnostic TypeScript client for the ContentEdge headless CMS with API key authentication and optional React Query integration.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -17,17 +17,19 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
-    }
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": ["./dist/styles.css"],
   "scripts": {
     "dev": "vite",
     "preview": "vite preview",
     "lint": "eslint .",
-    "build": "tsdown",
+    "build": "tsdown && npm run copy-css",
+    "copy-css": "node -e \"require('fs').cpSync('src/styles/richText.css','dist/styles.css')\"",
     "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

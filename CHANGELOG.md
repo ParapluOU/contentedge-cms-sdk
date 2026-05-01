@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.7
+
+### Patch Changes
+
+- Add CSS export: `src/styles/richText.css` is now built to `dist/styles.css` and exposed via
+  `exports["./styles.css"]`. Consumers can import it once in their app entry point:
+  `import '@codesocietyou/contentedge-cms-sdk/styles.css'`
+  This provides display rules for `.tiptap-bullet-list`, `.tiptap-ordered-list`, and `.tiptap-link`
+  — the classes emitted by ContentEdge's TipTap editor — ensuring stored HTML renders correctly in
+  any framework that resets default list styles (e.g. Tailwind Preflight).
+- `sideEffects` updated from `false` to `["./dist/styles.css"]` so bundlers do not tree-shake the stylesheet.
+- `build` script extended with a `copy-css` step to copy the CSS source into `dist/`.
+
 ## 1.0.6
 
 ### Patch Changes
