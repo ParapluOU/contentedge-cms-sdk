@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.6
+
+### Patch Changes
+
+- Fix Vite build error: `module` and `exports.import.default` were pointing to `./dist/index.js`
+  which `tsdown 0.21` no longer generates. Corrected to `./dist/index.mjs`.
+  All four package entry points (`index.cjs`, `index.mjs`, `index.d.cts`, `index.d.mts`) are
+  now verified to exist after every build via `prepublishOnly`.
+
 ## 1.0.5
 
 ### Patch Changes
