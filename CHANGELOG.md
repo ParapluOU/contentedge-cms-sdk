@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.5
+
+### Patch Changes
+
+- Fix TypeScript `TS2307` error: update `package.json` type declaration paths from `index.d.ts` (non-existent)
+  to `index.d.mts` (ESM) and `index.d.cts` (CJS), matching what `tsdown 0.21` actually generates.
+  Uses condition-based `exports` so both ESM and CJS consumers get the correct declarations.
+
 ## 1.0.4
 
 ### Patch Changes
