@@ -2,24 +2,29 @@
    These classes are emitted by ContentEdge's TipTap editor extensions
    (BulletList, OrderedList, Link). Import this file once in your app
    entry point wherever stored HTML is rendered via dangerouslySetInnerHTML
-   or equivalent. Without these rules, CSS frameworks that reset list
-   styles (e.g. Tailwind Preflight) will strip bullets and indentation. */
+   or equivalent.
+
+   !important is required on all list properties: CSS frameworks that
+   ship a Preflight/reset (Tailwind, normalize.css, MUI CssBaseline) set
+   `ul, ol { list-style: none; margin: 0; padding: 0 }` — even when those
+   rules are inside @layer base, consumer apps may have unlayered resets
+   that would otherwise win on specificity. */
 
 .tiptap-bullet-list {
-  list-style-type: disc;
-  padding-left: 1.5em;
-  margin: 0.5em 0;
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+  margin: 0.5em 0 !important;
 }
 
 .tiptap-ordered-list {
-  list-style-type: decimal;
-  padding-left: 1.5em;
-  margin: 0.5em 0;
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+  margin: 0.5em 0 !important;
 }
 
 .tiptap-bullet-list li,
 .tiptap-ordered-list li {
-  display: list-item;
+  display: list-item !important;
   margin-bottom: 0.25em;
 }
 
