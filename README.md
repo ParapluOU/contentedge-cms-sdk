@@ -61,20 +61,33 @@ createApiClient({
 
 ### 2. Fetch Content (Basic)
 
+Omit `sortBy` and `direction` so the list matches the CMS admin display order
+(`sortOrder` ASC; pairwise card swap — dropping A on D exchanges A and D, items
+in between do not shift). Concurrent creates can share a `sortOrder`; the CMS
+uses `id ASC` as a tie-breaker.
+
 ```typescript
 import { fetchContentByType } from '@codesocietyou/contentedge-cms-sdk';
 
-// Fetch paginated content
 const response = await fetchContentByType({
   type: 'NEWS',
   page: 0,
   size: 10,
-  sortBy: 'id',
-  direction: 'DESC',
   filters: { publicationType: 'GAMEHEARTS' }, // arbitrary filters
 });
 
 const items = response.data.content;
+```
+
+To ignore admin order and sort by id (legacy):
+
+```typescript
+const byId = await fetchContentByType({
+  type: 'NEWS',
+  page: 0,
+  size: 10,
+  sortBy: 'id',
+});
 ```
 
 ### 3. Fetch Content (React Query)
@@ -145,18 +158,24 @@ interface SdkConfig {
 
 #### `fetchContentByType<C>(params: ContentListParams): Promise<ContentResponse<C>>`
 
-Fetch paginated content by type with filters and sorting.
+Fetch paginated content by type with filters and optional sorting.
+
+Omitting `sortBy` / `direction` follows the CMS admin display order. Pass
+`sortBy: "id"` to ignore it. `sortBy: "sortOrder"` is also valid if you want to
+send the field explicitly (the CMS still applies `id ASC` as a tie-breaker).
 
 ```typescript
 interface ContentListParams {
   type?: string;                    // Content type (default: 'ALL')
   page?: number;                    // Page number (0-indexed)
   size?: number;                    // Items per page
-  sortBy?: string;                  // Sort field (default: 'id')
-  direction?: 'ASC' | 'DESC';       // Sort direction (default: 'DESC')
+  sortBy?: string;                  // Omit to follow admin order; "id" | "sortOrder"
+  direction?: 'ASC' | 'DESC';       // Sent only when provided
   filters?: Record<string, any>;    // Arbitrary query filters
 }
 ```
+
+List items (`ContentDto`) include optional `sortOrder?: number` (lower appears first).
 
 #### `fetchContentById<C>(id: number): Promise<ApiResponse<ContentDto<C>>>`
 
@@ -237,6 +256,7 @@ interface NormalizedContentItem {
   title: string;
   text: string;
   type: string;
+  sortOrder?: number;       // Admin display order (lower first); omitted if the API did not send it
   insideImage: string;      // Resolved URL
   outsideImage: string;     // Resolved URL
   pdfPath: string | null;   // Resolved URL (type-aware)
@@ -413,8 +433,8 @@ const detail = await fetchContentById(123);
 
 This SDK is designed specifically for the ContentEdge CMS API. The endpoint paths are fixed as part of the CMS API contract:
 
-- `GET /content/type/:type` - List content by type with pagination
-- `GET /content/:id` - Get single content item by ID
+- `GET /content/type/:type` - List content by type with pagination. Omit `sortBy` to follow admin display order.
+- `GET /content/:id` - Get single content item by ID. Items include optional `sortOrder` (lower appears first).
 
 ### Environment Configuration
 
