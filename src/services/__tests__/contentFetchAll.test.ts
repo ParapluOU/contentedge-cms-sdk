@@ -106,4 +106,20 @@ describe('fetchAllContent', () => {
         expect(all.length).toBe(1);
         expect(spy).toHaveBeenCalledTimes(2);
     });
+
+    it('does not inject sortBy or direction when omitted', async () => {
+        const spy = vi.spyOn(contentApi, 'fetchContentByType')
+            .mockResolvedValueOnce(makePage(
+                [{ id: 1, title: 'A', text: 't', type: 'T', customFields: {} }],
+                0,
+                1
+            ));
+
+        await fetchAllContent({ type: 'T' });
+
+        const passed = spy.mock.calls[0][0];
+        expect(passed).not.toHaveProperty('sortBy');
+        expect(passed).not.toHaveProperty('direction');
+    });
 });
+
