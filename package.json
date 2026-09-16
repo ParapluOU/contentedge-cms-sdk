@@ -1,7 +1,7 @@
 {
   "name": "@codesocietyou/contentedge-cms-sdk",
   "private": false,
-  "version": "1.0.8",
+  "version": "2.0.0",
   "description": "A lightweight, framework-agnostic TypeScript client for the ContentEdge headless CMS with API key authentication and optional React Query integration.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -23,7 +23,9 @@
   "files": [
     "dist"
   ],
-  "sideEffects": ["./dist/styles.css"],
+  "sideEffects": [
+    "./dist/styles.css"
+  ],
   "scripts": {
     "dev": "vite",
     "preview": "vite preview",
