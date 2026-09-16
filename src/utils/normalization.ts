@@ -69,6 +69,7 @@ export function normalizeContentItem<C extends CustomFields = CustomFields>(
         team: getField('team'),
         publicationType: getField('publicationType'),
         fake: customFields.fake === true ? true : null,
+        sortOrder: item.sortOrder,
     };
 }
 
