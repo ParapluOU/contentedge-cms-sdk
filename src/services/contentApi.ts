@@ -24,13 +24,19 @@ export async function fetchContentByType<C extends CustomFields = CustomFields>(
         ? params.size
         : 10;
 
-    // Build query parameters
+    // Build query parameters. Omit sortBy/direction unless the caller passed them
+    // so the CMS default (admin display order / sortOrder ASC) applies.
     const queryParams = new URLSearchParams({
         page: String(page),
         size: String(size),
-        sortBy: params.sortBy ?? 'id',
-        direction: params.direction ?? 'DESC',
     });
+
+    if (params.sortBy) {
+        queryParams.set('sortBy', params.sortBy);
+    }
+    if (params.direction) {
+        queryParams.set('direction', params.direction);
+    }
 
     // Add arbitrary filters
     if (params.filters) {
