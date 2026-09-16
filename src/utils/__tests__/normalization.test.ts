@@ -105,6 +105,21 @@ describe('normalization', () => {
             expect(normalized.team).toBeNull();
             expect(normalized.publicationType).toBeNull();
             expect(normalized.fake).toBeNull();
+            expect(normalized.sortOrder).toBeUndefined();
+        });
+
+        it('preserves sortOrder from the API item', () => {
+            const item: ContentDto = {
+                id: 1,
+                title: 'Ordered',
+                text: 'Text',
+                type: 'NEWS',
+                sortOrder: 4,
+                customFields: {},
+            };
+
+            const normalized = normalizeContentItem(item);
+            expect(normalized.sortOrder).toBe(4);
         });
     });
 
