@@ -8,6 +8,11 @@ export interface ContentDto<C extends CustomFields = CustomFields> {
     text: string;
     type: string;          // user-configurable
     customFields: C;       // all user-defined fields (JSONB)
+    /**
+     * Per-type admin display order. Lower values appear first.
+     * Not unique: concurrent creates can share a value; the CMS uses id ASC as a tie-breaker.
+     */
+    sortOrder?: number;
 }
 
 export interface ApiResponse<T> {
@@ -38,7 +43,15 @@ export interface ContentListParams {
     type?: string; // if omitted, defaults to 'ALL'
     page?: number;
     size?: number;
+    /**
+     * Sort field forwarded to the CMS (`id` or `sortOrder`).
+     * Omit to follow the admin display order. Pass `"id"` to ignore it.
+     */
     sortBy?: string;
+    /**
+     * Sort direction forwarded to the CMS.
+     * Omit with `sortBy` to use the CMS default (`ASC` when sorting by `sortOrder`).
+     */
     direction?: 'ASC' | 'DESC';
     // Arbitrary filters (e.g., publicationType, tags, etc.)
     filters?: Record<string, string | number | boolean | null | undefined>;
@@ -83,4 +96,9 @@ export interface NormalizedContentItem {
     team: string | null;
     publicationType: string | null;
     fake: boolean | null;
+    /**
+     * Per-type admin display order. Lower values appear first.
+     * Omitted when the API did not send `sortOrder`.
+     */
+    sortOrder?: number;
 }
