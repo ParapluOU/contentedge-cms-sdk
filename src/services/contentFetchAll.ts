@@ -45,9 +45,7 @@ export async function fetchAllContent<
     options: FetchAllOptions<C, T> = {}
 ): Promise<T[]> {
     const size = params.size ?? 100;
-    const sortBy = params.sortBy ?? 'id';
-    const direction = params.direction ?? 'DESC';
-    
+
     const mapItem = options.mapItem ?? ((item: ContentDto<C>) => item as unknown as T);
     const dedupeBy = options.dedupeBy ?? ((item: T) => (item as { id: string | number }).id);
     const hardStopMaxPages = options.hardStopMaxPages ?? 20;
@@ -60,8 +58,6 @@ export async function fetchAllContent<
             ...params,
             page,
             size,
-            sortBy,
-            direction,
         });
 
         const data = response?.data as PaginatedData<ContentDto<C>> | undefined;
