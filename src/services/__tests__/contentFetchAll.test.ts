@@ -121,5 +121,18 @@ describe('fetchAllContent', () => {
         expect(passed).not.toHaveProperty('sortBy');
         expect(passed).not.toHaveProperty('direction');
     });
-});
 
+    it('forwards the abort signal to each page request', async () => {
+        const controller = new AbortController();
+        const spy = vi.spyOn(contentApi, 'fetchContentByType')
+            .mockResolvedValueOnce(makePage(
+                [{ id: 1, title: 'A', text: 't', type: 'T', customFields: {} }],
+                0,
+                1
+            ));
+
+        await fetchAllContent({ type: 'T' }, { signal: controller.signal });
+
+        expect(spy.mock.calls[0][1]).toEqual({ signal: controller.signal });
+    });
+});

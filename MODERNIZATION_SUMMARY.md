@@ -3,6 +3,9 @@
 **Date:** February 14, 2026
 **Status:** ✅ All automated tasks completed
 
+> **Note:** axios was removed entirely in 3.0.0 in favour of native `fetch`; the SDK
+> now has no runtime dependencies. The axios notes below are kept for history.
+
 ## What Was Updated
 
 ### 1. ✅ Critical Security Updates

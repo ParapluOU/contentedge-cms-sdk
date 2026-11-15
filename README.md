@@ -135,9 +135,31 @@ console.log(normalized[0].pdfPath);     // "https://cdn.contentedge.com/files/do
 
 ### Configuration
 
-#### `createApiClient(config: SdkConfig): AxiosInstance`
+#### `createApiClient(config: SdkConfig): CmsClient`
 
 Initialize the SDK with your CMS configuration. Call this once at app startup.
+
+The SDK has no runtime dependencies: requests use the platform's native `fetch`
+(Node 18+, all modern browsers). Every request sends `Accept`/`Content-Type: application/json`
+plus `X-API-Key` and `X-Tenant` when configured, and is aborted after `timeoutMs`.
+
+The returned client (also available later via `getApiClient()` or the lazy `apiClient`)
+is a small typed wrapper, not an axios instance:
+
+```typescript
+interface CmsClient {
+  // Relative paths are joined to baseUrl; resolves to the parsed response body
+  get<T>(path: string, options?: {
+    params?: Record<string, string | number | boolean | null | undefined>;
+    signal?: AbortSignal;                     // combined with the timeout
+    responseType?: 'json' | 'blob' | 'text';  // default 'json'
+  }): Promise<T>;
+}
+
+const page = await getApiClient().get<ContentResponse>('/content/type/NEWS', {
+  params: { page: 0, size: 10 },
+});
+```
 
 ```typescript
 interface SdkConfig {
@@ -190,12 +212,18 @@ interface FetchAllOptions<C, T> {
   mapItem?: (item: ContentDto<C>) => T;        // Transform each item
   dedupeBy?: (item: T) => string | number;     // Dedupe key extractor
   hardStopMaxPages?: number;                    // Safety limit (default: 20)
+  signal?: AbortSignal;                         // Abort remaining page requests
 }
 ```
 
-#### `downloadFile(path: string): Promise<Blob>`
+#### `downloadFile(path: string, options?: { signal?: AbortSignal }): Promise<Blob>`
 
-Download a file from a given path (with proper authentication for CMS files).
+Download a file from a given path. URLs under `baseUrl` or `fileBaseUrl` are fetched
+with the SDK's auth headers; any other URL is fetched with plain `fetch` and no auth
+headers, so your API key is never sent to third-party hosts.
+
+`fetchContentByType` and `fetchContentById` also accept an optional second argument
+`{ signal }` to cancel a request.
 
 ### React Query Integration
 
@@ -284,7 +312,8 @@ try {
   if (e instanceof CmsError) {
     console.error('CMS error:', e.status, e.data);
     // e.status: HTTP status code
-    // e.data: Response body (if any)
+    // e.data: Response body (parsed JSON, raw text, or undefined)
+    // Network errors, timeouts and aborts have no status; the original error is in e.cause
   } else {
     console.error('Unknown error:', e);
   }

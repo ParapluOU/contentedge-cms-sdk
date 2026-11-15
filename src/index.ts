@@ -1,5 +1,6 @@
 // Services
 export { apiClient, createApiClient, getApiClient, resetApiClient } from './services/apiClient';
+export type { CmsClient, CmsRequestOptions, QueryParamValue } from './services/apiClient';
 export * from './services/contentApi';
 export * from './services/contentFetchAll';
 

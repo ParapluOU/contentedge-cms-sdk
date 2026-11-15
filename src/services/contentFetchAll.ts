@@ -22,6 +22,11 @@ export interface FetchAllOptions<C extends CustomFields, T> {
      * @default 20
      */
     hardStopMaxPages?: number;
+
+    /**
+     * Abort all remaining page requests
+     */
+    signal?: AbortSignal;
 }
 
 /**
@@ -58,7 +63,7 @@ export async function fetchAllContent<
             ...params,
             page,
             size,
-        });
+        }, { signal: options.signal });
 
         const data = response?.data as PaginatedData<ContentDto<C>> | undefined;
         if (!data) break;
