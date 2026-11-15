@@ -1,5 +1,5 @@
-import axios from 'axios';
-import { getApiClient } from './apiClient';
+import { combineSignals, getApiClient } from './apiClient';
+import { CmsError } from '../errors/CmsError';
 import { getConfig } from '../config/sdkConfig';
 import type {
     ApiResponse,
@@ -9,11 +9,17 @@ import type {
     CustomFields,
 } from '../types/content';
 
+export interface FetchOptions {
+    /** Abort the request (combined with the configured timeout). */
+    signal?: AbortSignal;
+}
+
 /**
  * Fetch content by type with pagination and filters
  */
 export async function fetchContentByType<C extends CustomFields = CustomFields>(
-    params: ContentListParams = {}
+    params: ContentListParams = {},
+    options: FetchOptions = {}
 ): Promise<ContentResponse<C>> {
     const client = getApiClient();
     
@@ -47,19 +53,18 @@ export async function fetchContentByType<C extends CustomFields = CustomFields>(
     }
 
     const url = `/content/type/${type}?${queryParams.toString()}`;
-    const response = await client.get<ContentResponse<C>>(url);
-    return response.data;
+    return client.get<ContentResponse<C>>(url, { signal: options.signal });
 }
 
 /**
  * Fetch a single content item by ID
  */
 export async function fetchContentById<C extends CustomFields = CustomFields>(
-    id: number
+    id: number,
+    options: FetchOptions = {}
 ): Promise<ApiResponse<ContentDto<C>>> {
     const client = getApiClient();
-    const response = await client.get<ApiResponse<ContentDto<C>>>(`/content/${id}`);
-    return response.data;
+    return client.get<ApiResponse<ContentDto<C>>>(`/content/${id}`, { signal: options.signal });
 }
 
 /**
@@ -67,7 +72,7 @@ export async function fetchContentById<C extends CustomFields = CustomFields>(
  * @param path - Full URL or relative path to the file
  * @returns Blob containing the file data
  */
-export async function downloadFile(path: string): Promise<Blob> {
+export async function downloadFile(path: string, options: FetchOptions = {}): Promise<Blob> {
     const config = getConfig();
     const lower = path.toLowerCase();
     const api = (config.baseUrl || '').toLowerCase();
@@ -78,12 +83,20 @@ export async function downloadFile(path: string): Promise<Blob> {
 
     if (isCmsFile) {
         // Use authenticated client for CMS files
-        const client = getApiClient();
-        const response = await client.get(path, { responseType: 'blob' });
-        return response.data as Blob;
+        return getApiClient().get<Blob>(path, { responseType: 'blob', signal: options.signal });
     }
-    
-    // For external files, use axios directly without auth headers
-    const response = await axios.get(path, { responseType: 'blob' });
-    return response.data as Blob;
+
+    // For external files, use plain fetch without auth headers
+    let response: Response;
+    try {
+        response = await fetch(path, {
+            signal: combineSignals(options.signal, config.timeoutMs ?? 30_000),
+        });
+    } catch (error) {
+        throw new CmsError('File download failed', { cause: error });
+    }
+    if (!response.ok) {
+        throw new CmsError(`File download failed (${response.status})`, { status: response.status });
+    }
+    return response.blob();
 }

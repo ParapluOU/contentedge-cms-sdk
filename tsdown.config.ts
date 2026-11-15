@@ -4,8 +4,8 @@ export default defineConfig({
     entry: ['src/index.ts'],
     format: ['esm', 'cjs'],
     deps: {
-        // axios and react-query are peer/runtime deps — never bundle them
-        neverBundle: ['axios', '@tanstack/react-query'],
+        // react-query is an optional peer dep — never bundle it
+        neverBundle: ['@tanstack/react-query'],
     },
     dts: {
         // Required when tsconfig.json uses project references
